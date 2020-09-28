@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"os"
 	"os/exec"
 	"strings"
@@ -17,7 +16,7 @@ type (
 	Options map[string]string
 
 	// CmdResult defines result of command
-	CmdResult *exec.ExitError
+	CmdResult error
 
 	ContainerInfo struct{}
 
@@ -102,15 +101,19 @@ func (cmd *POCCommanderStub) CreateContainer(name, osTemplate string, options Op
 	params["ostemplate"] = osTemplate
 	command := buildCommand(&cmd.execCommandsMap.CtCreate, params)
 
+	return command.Run()
+}
+
+func (cmd *POCCommanderStub) SetContainerParameters(params Options) CmdResult {
+	return cmd.execCommand(&cmd.execCommandsMap.CtSet, params)
+}
+
+func (cmd *POCCommanderStub) execCommand(execInfo *ExecCommandInfo, params Options) CmdResult {
+	command := buildCommand(execInfo, params)
 	var out bytes.Buffer
 	command.Stdout = &out
-	err := command.Run()
-	if err != nil {
-		log.Fatal(err)
-	}
-
 	fmt.Printf("Stdout:\n%s\n", out.String())
-	return nil
+	return command.Run()
 }
 
 func NewPOCCommanderStub(path string) (*POCCommanderStub, error) {
