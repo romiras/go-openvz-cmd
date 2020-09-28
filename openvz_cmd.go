@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"os"
 	"os/exec"
 	"strings"
@@ -44,6 +45,7 @@ type ExecCommandInfo struct {
 type ExecCommandsMap struct {
 	CtCreate ExecCommandInfo `yaml:"ct-create"`
 	CtSet    ExecCommandInfo `yaml:"ct-set"`
+	CtDelete ExecCommandInfo `yaml:"ct-delete"`
 }
 
 type POCCommanderStub struct {
@@ -104,8 +106,16 @@ func (cmd *POCCommanderStub) CreateContainer(name, osTemplate string, options Op
 	return command.Run()
 }
 
-func (cmd *POCCommanderStub) SetContainerParameters(params Options) CmdResult {
+func (cmd *POCCommanderStub) SetContainerParameters(name string, params Options) CmdResult {
+	if params == nil {
+		log.Fatal("params cannot be nil")
+	}
+	params["name"] = name
 	return cmd.execCommand(&cmd.execCommandsMap.CtSet, params)
+}
+
+func (cmd *POCCommanderStub) DeleteContainer(name string) CmdResult {
+	return cmd.execCommand(&cmd.execCommandsMap.CtDelete, nil)
 }
 
 func (cmd *POCCommanderStub) execCommand(execInfo *ExecCommandInfo, params Options) CmdResult {
